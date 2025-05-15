@@ -1,0 +1,124 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Kitchen Echoes Recorder</title>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #FBD157;
+      padding: 40px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 32px;
+      max-width: 600px;
+      width: 100%;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    h2 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5em;
+    }
+
+    p {
+      margin-bottom: 1.2em;
+      line-height: 1.5;
+    }
+
+    input, textarea {
+      width: 100%;
+      padding: 0.8em;
+      margin-bottom: 1em;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 1rem;
+    }
+
+    button {
+      padding: 0.8em 1.5em;
+      font-size: 1rem;
+      margin-right: 1em;
+      margin-bottom: 1em;
+      border: none;
+      border-radius: 8px;
+      background-color: #FF5C35;
+      color: white;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    button:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+
+    #status {
+      font-size: 0.9rem;
+      color: #333;
+      margin-top: 1em;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>🎤 Share Your Kitchen Echo</h2>
+    <p>Click the button below to record your memory or sound from the restaurant. The recording will be saved locally as a .wav file.</p>
+
+    <button id="recordButton">Start Recording</button>
+    <button id="stopButton" disabled>Stop</button>
+
+    <form id="uploadForm">
+      <input type="text" id="restaurant" placeholder="Restaurant name" required />
+      <textarea id="description" placeholder="Describe what this sound captures..." required></textarea>
+      <input type="text" id="name" placeholder="Your name (optional)" />
+      <p style="font-size: 0.85rem; color: #666;">
+        ⚠️ Your voice will only be saved locally in this demo. To upload data to Airtable, server integration is required.
+      </p>
+    </form>
+    <p id="status"></p>
+  </div>
+
+  <script>
+    let mediaRecorder, audioChunks = [];
+
+    const recordButton = document.getElementById("recordButton");
+    const stopButton = document.getElementById("stopButton");
+    const status = document.getElementById("status");
+
+    recordButton.onclick = async () => {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder = new MediaRecorder(stream);
+      mediaRecorder.start();
+      audioChunks = [];
+
+      mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(audioChunks, { type: "audio/wav" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "kitchen_echo.wav";
+        a.click();
+        status.innerText = "✅ Recording complete. File saved to your computer.";
+      };
+
+      recordButton.disabled = true;
+      stopButton.disabled = false;
+      status.innerText = "🎙️ Recording in progress...";
+    };
+
+    stopButton.onclick = () => {
+      mediaRecorder.stop();
+      recordButton.disabled = false;
+      stopButton.disabled = true;
+    };
+  </script>
+</body>
+</html>
