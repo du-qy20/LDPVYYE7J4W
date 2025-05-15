@@ -1,0 +1,63 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Kitchen Echoes Recorder</title>
+  <style>
+    body { font-family: sans-serif; padding: 2em; background: #fefefe; }
+    button { padding: 1em; margin: 1em 0; }
+    input, textarea { width: 100%; margin-bottom: 1em; }
+  </style>
+</head>
+<body>
+  <h2>🎤 留下你的厨房声音</h2>
+  <p>点击开始录音，讲述你想分享的餐厅记忆。</p>
+  <button id="recordButton">开始录音</button>
+  <button id="stopButton" disabled>停止</button>
+  <br>
+  <form id="uploadForm">
+    <input type="text" id="restaurant" placeholder="餐厅名" required />
+    <textarea id="description" placeholder="请简单描述这段声音的内容" required></textarea>
+    <input type="text" id="name" placeholder="你的名字（可匿名）" />
+    <p>⚠️ 当前版本录音仅保存到本地。如需上传到 Airtable，请部署到服务器端配合脚本。</p>
+  </form>
+  <p id="status"></p>
+
+  <script>
+    let mediaRecorder, audioChunks = [];
+
+    const recordButton = document.getElementById("recordButton");
+    const stopButton = document.getElementById("stopButton");
+    const status = document.getElementById("status");
+
+    recordButton.onclick = async () => {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder = new MediaRecorder(stream);
+      mediaRecorder.start();
+      audioChunks = [];
+
+      mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(audioChunks, { type: "audio/wav" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "kitchen_voice.wav";
+        a.click();
+        status.innerText = "✅ 录音完成，已保存到本地";
+      };
+
+      recordButton.disabled = true;
+      stopButton.disabled = false;
+      status.innerText = "🎙️ 正在录音...";
+    };
+
+    stopButton.onclick = () => {
+      mediaRecorder.stop();
+      recordButton.disabled = false;
+      stopButton.disabled = true;
+    };
+  </script>
+</body>
+</html>
